@@ -16,6 +16,7 @@
 		46266BA2209AD3020094ECF0 /* OrgHalfLineLabelTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 46266BA1209AD3020094ECF0 /* OrgHalfLineLabelTests.m */; };
 		46266BAD209AD3020094ECF0 /* OrgHalfLineLabelUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 46266BAC209AD3020094ECF0 /* OrgHalfLineLabelUITests.m */; };
 		46266BBC209AD3630094ECF0 /* OrgHalfLineLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = 46266BBB209AD3630094ECF0 /* OrgHalfLineLabel.m */; };
+		AF91820228A73F060073D3E2 /* TruncationLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = AF91820128A73F060073D3E2 /* TruncationLabel.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -54,6 +55,8 @@
 		46266BAE209AD3020094ECF0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		46266BBA209AD3630094ECF0 /* OrgHalfLineLabel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OrgHalfLineLabel.h; sourceTree = "<group>"; };
 		46266BBB209AD3630094ECF0 /* OrgHalfLineLabel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OrgHalfLineLabel.m; sourceTree = "<group>"; };
+		AF91820028A73F060073D3E2 /* TruncationLabel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TruncationLabel.h; sourceTree = "<group>"; };
+		AF91820128A73F060073D3E2 /* TruncationLabel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TruncationLabel.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -115,6 +118,8 @@
 				46266B93209AD3010094ECF0 /* LaunchScreen.storyboard */,
 				46266B96209AD3010094ECF0 /* Info.plist */,
 				46266B97209AD3010094ECF0 /* main.m */,
+				AF91820028A73F060073D3E2 /* TruncationLabel.h */,
+				AF91820128A73F060073D3E2 /* TruncationLabel.m */,
 			);
 			path = OrgHalfLineLabel;
 			sourceTree = "<group>";
@@ -268,6 +273,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				46266BBC209AD3630094ECF0 /* OrgHalfLineLabel.m in Sources */,
+				AF91820228A73F060073D3E2 /* TruncationLabel.m in Sources */,
 				46266B8D209AD2FF0094ECF0 /* ViewController.m in Sources */,
 				46266B98209AD3010094ECF0 /* main.m in Sources */,
 				46266B8A209AD2FF0094ECF0 /* AppDelegate.m in Sources */,
