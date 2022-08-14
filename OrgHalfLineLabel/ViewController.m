@@ -64,8 +64,8 @@
     {
         CGFloat height = 40.0;
         NSArray *ranges = @[
-            [NSValue valueWithRange:NSMakeRange(0, 0)],
-            [NSValue valueWithRange:NSMakeRange(0, 1)],
+//            [NSValue valueWithRange:NSMakeRange(0, 0)],
+//            [NSValue valueWithRange:NSMakeRange(0, 1)],
             
             [NSValue valueWithRange:NSMakeRange(0, 26)],
             [NSValue valueWithRange:NSMakeRange(0, 27)],
@@ -90,11 +90,11 @@
 //#define NilOrEmpty (@"")
 #define NilOrEmpty (@"nil")
         NSArray *texts =@[
-            @[@"我", NilOrEmpty],
-            @[NilOrEmpty, @"#我是一个标签"],
-            @[NilOrEmpty, NilOrEmpty],
+//            @[@"我", NilOrEmpty],
+//            @[NilOrEmpty, @"#我是一个标签"],
+//            @[NilOrEmpty, NilOrEmpty],
             
-            @[[halfStr substringWithRange:NSMakeRange(0, 30)], @"#我是一个长标签我是一个长标签我是一个长标签我是一个长标签我是一个长标签"],
+//            @[[halfStr substringWithRange:NSMakeRange(0, 30)], @"#我是一个长标签我是一个长标签我是一个长标签我是一个长标签我是一个长标签"],
         ];
         for (int i = 0; i < texts.count; i++) {
             TruncationLabel *_label1 = [[TruncationLabel alloc] initWithFrame:CGRectMake(10.f, CGRectGetMaxY(lastLabel.frame) + 10.f * (i + 1) + height * i, self.view.frame.size.width - 20.f, height)];
