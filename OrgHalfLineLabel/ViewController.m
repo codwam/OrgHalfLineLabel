@@ -66,13 +66,15 @@
         NSArray *ranges = @[
             [NSValue valueWithRange:NSMakeRange(0, 0)],
             [NSValue valueWithRange:NSMakeRange(0, 1)],
+            
             [NSValue valueWithRange:NSMakeRange(0, 26)],
             [NSValue valueWithRange:NSMakeRange(0, 27)],
-            
             [NSValue valueWithRange:NSMakeRange(0, 28)], // 刚好一行
             [NSValue valueWithRange:NSMakeRange(0, 29)],
+
             [NSValue valueWithRange:NSMakeRange(0, halfStr.length)],
         ];
+        TruncationLabel *lastLabel;
         for (int i = 0; i < ranges.count; i++) {
             NSRange range = [ranges[i] rangeValue];
             NSString *str1 = [halfStr substringWithRange:range];
@@ -81,6 +83,25 @@
             _label1.numberOfLines = 2;
             _label1.firstText = str1;
             _label1.lastText = @"#我是一个标签";
+            [self.view addSubview:_label1];
+            lastLabel = _label1;
+        }
+        // Special Case
+//#define NilOrEmpty (@"")
+#define NilOrEmpty (@"nil")
+        NSArray *texts =@[
+            @[@"我", NilOrEmpty],
+            @[NilOrEmpty, @"#我是一个标签"],
+            @[NilOrEmpty, NilOrEmpty],
+            
+            @[[halfStr substringWithRange:NSMakeRange(0, 30)], @"#我是一个长标签我是一个长标签我是一个长标签我是一个长标签我是一个长标签"],
+        ];
+        for (int i = 0; i < texts.count; i++) {
+            TruncationLabel *_label1 = [[TruncationLabel alloc] initWithFrame:CGRectMake(10.f, CGRectGetMaxY(lastLabel.frame) + 10.f * (i + 1) + height * i, self.view.frame.size.width - 20.f, height)];
+            _label1.backgroundColor = UIColor.darkGrayColor;
+            _label1.numberOfLines = 2;
+            _label1.firstText = [[texts[i] firstObject]  isEqual: @"nil"] ? nil : [texts[i] firstObject];
+            _label1.lastText = [[texts[i] lastObject]  isEqual: @"nil"] ? nil : [texts[i] lastObject];
             [self.view addSubview:_label1];
         }
     }

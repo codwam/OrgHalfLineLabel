@@ -91,113 +91,126 @@
     CGContextSetTextMatrix(context, CGAffineTransformIdentity);
     CGContextTranslateCTM(context, 0, self.bounds.size.height);
     CGContextScaleCTM(context, 1.0, - 1.0);
+    
+    CGPoint lastOrigin = CGPointZero;
+    
     // 获取last text的line
-    __auto_type renderLastLine = CTLineCreateWithAttributedString((CFAttributedStringRef) _renderLastText);
-    __auto_type renderLastLineRect = [_renderLastText boundingRectWithSize:rect.size options:NSStringDrawingUsesLineFragmentOrigin context:nil];
+    __auto_type lastTextLine = CTLineCreateWithAttributedString((CFAttributedStringRef) _renderLastText);
+    CGFloat ascent = 0, descent = 0, leading = 0;
+    double lastTextLineWidth = CTLineGetTypographicBounds(lastTextLine, &ascent, &descent, &leading);
     // 获取first text的framesetter
     __auto_type framesetter = CTFramesetterCreateWithAttributedString((CFAttributedStringRef) _renderFirstText);
-    __auto_type path = CGPathCreateMutable();
-    CGPathAddRect(path, NULL, rect);
-    __auto_type frame = CTFramesetterCreateFrame(framesetter, CFRangeMake(0, 0), path, NULL);
-    // 获取first text的lines
-    CFArrayRef lines = CTFrameGetLines(frame);
-    CFIndex linesCount = CFArrayGetCount(lines);
-    CGPoint origins[linesCount];
-    CTFrameGetLineOrigins(frame, CFRangeMake(0, 0), origins);
-    NSInteger maxLinesCount = self.numberOfLines == 0 ? linesCount : MIN(linesCount, self.numberOfLines);
-    NSInteger lastLinesIndex = self.numberOfLines == 0 ? linesCount - 1 : self.numberOfLines - 1;
-    // TODO: lihui02 没有first text
-    CGPoint lastOrigin = CGPointMake(0, 25);
-    if (maxLinesCount == 0) {
-        CGContextSetTextPosition(context, lastOrigin.x, lastOrigin.y);
-    }
-    for (int i = 0; i < maxLinesCount; i++) {
-        __auto_type lineOrigin = origins[i];
-        CTLineRef line = CFArrayGetValueAtIndex(lines, i);
-        XLog(@"lineOrigin: %@", NSStringFromCGPoint(lineOrigin));
-        CFRange range = CTLineGetStringRange(line);
-        XLog(@"range: {%ld, %ld}}", range.location, range.length);
-        // last line hanle
-        CTLineRef lastLine = nil;
-        if (i == lastLinesIndex && _renderLastText) {
-            NSRange endLineRange = NSMakeRange(range.location, 0);
-            endLineRange.length  = [_renderFirstText length] - endLineRange.location;
-            
-            NSAttributedString *endString = [_renderFirstText attributedSubstringFromRange:endLineRange];
-            NSMutableAttributedString *tmpString = [[NSMutableAttributedString alloc] init];
-            [tmpString appendAttributedString:endString];
-            [tmpString appendAttributedString:_renderLastText];
-            CTLineRef endLine = CTLineCreateWithAttributedString((CFAttributedStringRef) tmpString);
-            // truncation
-            NSDictionary *attributes  = [_renderFirstText attributesAtIndex:range.location + range.length - 1 effectiveRange:NULL];
-            NSAttributedString *token = [[NSAttributedString alloc] initWithString:@"\u2026" attributes:attributes];
-            CTLineRef truncationToken = CTLineCreateWithAttributedString((__bridge CFAttributedStringRef) token);
-            lastLine = CTLineCreateTruncatedLine(endLine, rect.size.width, kCTLineTruncationEnd, truncationToken);
-            // 如果截取了，恢复原来的字符串
-            if (lastLine) {
-                endLine = CTLineCreateWithAttributedString((CFAttributedStringRef) endString);
-                lastLine = CTLineCreateTruncatedLine(endLine, rect.size.width - renderLastLineRect.size.width, kCTLineTruncationEnd, truncationToken);
+    // draw first text
+    if (framesetter) {
+        __auto_type path = CGPathCreateMutable();
+        CGPathAddRect(path, NULL, rect);
+        __auto_type frame = CTFramesetterCreateFrame(framesetter, CFRangeMake(0, 0), path, NULL);
+        // 获取 lines
+        CFArrayRef lines = CTFrameGetLines(frame);
+        CFIndex linesCount = CFArrayGetCount(lines);
+        CGPoint origins[linesCount];
+        CTFrameGetLineOrigins(frame, CFRangeMake(0, 0), origins);
+        NSInteger maxLinesCount = self.numberOfLines == 0 ? linesCount : MIN(linesCount, self.numberOfLines);
+        NSInteger lastLinesIndex = self.numberOfLines == 0 ? linesCount - 1 : self.numberOfLines - 1;
+        // 绘制 lines
+        for (int i = 0; i < maxLinesCount; i++) {
+            __auto_type lineOrigin = origins[i];
+            CTLineRef line = CFArrayGetValueAtIndex(lines, i);
+            XLog(@"lineOrigin: %@", NSStringFromCGPoint(lineOrigin));
+            // last line hanle
+            CTLineRef lastLine = nil;
+            if (i == lastLinesIndex && _renderLastText) {
+                CFRange range = CTLineGetStringRange(line);
+                XLog(@"range: {%ld, %ld}}", range.location, range.length);
+                NSRange endLineRange = NSMakeRange(range.location, 0);
+                endLineRange.length  = [_renderFirstText length] - endLineRange.location;
+                
+                NSAttributedString *endString = [_renderFirstText attributedSubstringFromRange:endLineRange];
+                NSMutableAttributedString *tmpString = [[NSMutableAttributedString alloc] init];
+                [tmpString appendAttributedString:endString];
+                [tmpString appendAttributedString:_renderLastText];
+                CTLineRef endLine = CTLineCreateWithAttributedString((CFAttributedStringRef) tmpString);
+                // truncation
+                NSDictionary *attributes  = [_renderFirstText attributesAtIndex:range.location + range.length - 1 effectiveRange:NULL];
+                NSAttributedString *token = [[NSAttributedString alloc] initWithString:@"\u2026" attributes:attributes];
+                CTLineRef truncationToken = CTLineCreateWithAttributedString((__bridge CFAttributedStringRef) token);
+                lastLine = CTLineCreateTruncatedLine(endLine, rect.size.width, kCTLineTruncationEnd, truncationToken);
+                // 如果截取了，恢复原来的字符串
+                if (lastLine) {
+                    endLine = CTLineCreateWithAttributedString((CFAttributedStringRef) endString);
+                    lastLine = CTLineCreateTruncatedLine(endLine, rect.size.width - lastTextLineWidth, kCTLineTruncationEnd, truncationToken);
+                }
+                
+                CFRelease(endLine);
+                CFRelease(truncationToken);
             }
-            
-            CFRelease(endLine);
-            CFRelease(truncationToken);
+            if (lastLine) {
+                double width = CTLineGetTypographicBounds(lastLine, NULL, NULL, NULL);
+                XLog(@"lastLine width: %f", width);
+                lastOrigin = CGPointMake(lineOrigin.x + width, lineOrigin.y);
+                CGContextSetTextPosition(context, lineOrigin.x, lineOrigin.y);
+                CTLineDraw(lastLine, context);
+                CFRelease(lastLine);
+            } else {
+                double width = CTLineGetTypographicBounds(line, NULL, NULL, NULL);
+                XLog(@"line width: %f", width);
+                lastOrigin = CGPointMake(lineOrigin.x + width, lineOrigin.y);
+                CGContextSetTextPosition(context, lineOrigin.x, lineOrigin.y);
+                CTLineDraw(line, context);
+            }
         }
-        // draw first text
-        if (lastLine) {
-            double width = CTLineGetTypographicBounds(lastLine, NULL, NULL, NULL);
-            XLog(@"lastLine width: %f", width);
-            lastOrigin = CGPointMake(lineOrigin.x + width, lineOrigin.y);
-            CGContextSetTextPosition(context, lineOrigin.x, lineOrigin.y);
-            CTLineDraw(lastLine, context);
-            CFRelease(lastLine);
-        } else {
-            double width = CTLineGetTypographicBounds(line, NULL, NULL, NULL);
-            XLog(@"line width: %f", width);
-            lastOrigin = CGPointMake(lineOrigin.x + width, lineOrigin.y);
-            CGContextSetTextPosition(context, lineOrigin.x, lineOrigin.y);
-            CTLineDraw(line, context);
-        }
+        
+        CFRelease(frame);
+        CFRelease(path);
+        CFRelease(framesetter);
     }
     // draw last text
-    {
-        // TODO: lihui02 不设置也可以正常显示
-//        CGContextSetTextPosition(context, lastOrigin.x, lastOrigin.y);
-        double remainingLength = rect.size.width - lastOrigin.x;
-        double width = CTLineGetTypographicBounds(renderLastLine, NULL, NULL, NULL);
-        CTLineRef lastLine = NULL;
-        // TODO: lihui02 这个不知道为什噩梦有时截断不了，必须继续增加length才可以
-        while (remainingLength < width && lastLine == NULL) {
-            lastLine = CTLineCreateTruncatedLine(renderLastLine, remainingLength, kCTLineTruncationEnd, NULL);
-            remainingLength += 1;
-        }
-        
-        if (lastLine) {
-            CGFloat ascent = 0, descent = 0, leading = 0;
-            double width = CTLineGetTypographicBounds(lastLine, &ascent, &descent, &leading);
-            CFIndex index = CTLineGetStringIndexForPosition(renderLastLine, CGPointMake(width, 0));
-            CTLineDraw(lastLine, context);
-            // draw remaining words
-            __auto_type remainingWords = CTLineCreateWithAttributedString((CFAttributedStringRef) [_renderLastText attributedSubstringFromRange:NSMakeRange(index, _renderLastText.length - index)]);
-            CGContextSetTextPosition(context, 0, lastOrigin.y - (ascent + descent + leading));
-            CTLineDraw(remainingWords, context);
-            CFRelease(remainingWords);
-        } else {
-            CTLineDraw(renderLastLine, context);
-        }
-        
-//        CFArrayRef runs = CTLineGetGlyphRuns(renderLastLine);
-//        CFIndex runsCount = CFArrayGetCount(runs);
-//        for (int i = 0; i < runsCount; i++) {
-//            CTRunRef run = CFArrayGetValueAtIndex(runs, i);
-//            double width = CTRunGetTypographicBounds(run, CFRangeMake(0, 0), NULL, NULL, NULL);
-//            CTRunDraw(run, context, CFRangeMake(0, 0));
+    if (_renderFirstText.length == 0) { // 没有 first text
+        lastOrigin = CGPointMake(0, 25);
+        CGContextSetTextPosition(context, lastOrigin.x, lastOrigin.y);
+    }
+    double remainingLength = rect.size.width - lastOrigin.x;
+    // TODO: lihui02 这个不知道为什有时截断不了，必须继续增加length才可以
+//        CTLineRef lastLine = NULL;
+//        while (remainingLength < width && lastLine == NULL) {
+//            lastLine = CTLineCreateTruncatedLine(renderLastLine, remainingLength, kCTLineTruncationEnd, NULL);
+//            remainingLength += 1;
 //        }
+//        if (lastLine) {
+//            CGFloat ascent = 0, descent = 0, leading = 0;
+//            double width = CTLineGetTypographicBounds(lastLine, &ascent, &descent, &leading);
+//            CFIndex index = CTLineGetStringIndexForPosition(renderLastLine, CGPointMake(width, 0));
+//            CTLineDraw(lastLine, context);
+//            // draw remaining words
+//            __auto_type remainingWords = CTLineCreateWithAttributedString((CFAttributedStringRef) [_renderLastText attributedSubstringFromRange:NSMakeRange(index, _renderLastText.length - index)]);
+//            CGContextSetTextPosition(context, 0, lastOrigin.y - (ascent + descent + leading));
+//            CTLineDraw(remainingWords, context);
+//            CFRelease(remainingWords);
+//        } else {
+//            CTLineDraw(renderLastLine, context);
+//        }
+    
+    __auto_type typesetter = CTTypesetterCreateWithAttributedString((CFAttributedStringRef) _renderLastText);
+    if (typesetter) {
+        CFIndex breakIndex = CTTypesetterSuggestLineBreak(typesetter, 0, remainingLength);
+        if (breakIndex < _renderLastText.length) {
+            // draw last line 1
+            __auto_type lastLine1 = CTLineCreateWithAttributedString((CFAttributedStringRef) [_renderLastText attributedSubstringFromRange:NSMakeRange(0, breakIndex)]);
+            CTLineDraw(lastLine1, context);
+            CFRelease(lastLine1);
+//            CTLineDraw(renderLastLine, context); // 这个也可以
+            // draw last line 2
+            __auto_type lastLine2 = CTLineCreateWithAttributedString((CFAttributedStringRef) [_renderLastText attributedSubstringFromRange:NSMakeRange(breakIndex, _renderLastText.length - breakIndex)]);
+            CGContextSetTextPosition(context, 0, lastOrigin.y - (ascent + descent + leading));
+            CTLineDraw(lastLine2, context);
+            CFRelease(lastLine2);
+        } else {
+            CTLineDraw(lastTextLine, context);
+        }
+        CFRelease(typesetter);
     }
     
-    CFRelease(frame);
-    CFRelease(path);
-    CFRelease(framesetter);
-    if (renderLastLine) CFRelease(renderLastLine);
+    if (lastTextLine) CFRelease(lastTextLine);
 }
 
 @end
